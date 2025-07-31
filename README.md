@@ -20,6 +20,7 @@ Options:
   -y, --yes         Automatically confirm all prompts
       --no-dots     Skip dotfile linking
       --no-packages Skip package installation
+      --dry-run     Show actions without performing them
   -h, --help        Show this help message
 ```
 
