@@ -7,13 +7,13 @@ my Thinkpad T470 dotfiles.
 ```bash
 git clone https://github.com/moxi-git/dotfiles.git -b "dotfiles"
 cd "dotfiles"
-./install.sh
+bash ./install.sh
 ```
 
 or run with flags
 
 ```bash
-λ ./install.sh -h       
+λ bash ./install.sh -h       
 Usage: ./install.sh [options]
 
 Options:
