@@ -175,6 +175,17 @@ if [ "$SKIP_PACKAGES" = false ] && confirm "Install base-devel group packages wi
 fi
 
 # -------------------------------
+# Install additional pacman packages
+# -------------------------------
+if [ "$SKIP_PACKAGES" = false ]; then
+  if [ "$DRY_RUN" = true ]; then
+    echo "[Dry-run] Would run: sudo pacman -S nemo btop thunar pavucontrol nvim"
+  else
+    sudo pacman -S nemo btop thunar pavucontrol nvim
+  fi
+fi
+
+# -------------------------------
 # Ensure paru is installed
 # -------------------------------
 if [ "$SKIP_PACKAGES" = false ]; then
@@ -209,14 +220,15 @@ if [ "$SKIP_PACKAGES" = false ]; then
     app2unit wireplumber trash-cli foot fish fastfetch starship
     btop jq socat imagemagick curl adw-gtk-theme
     papirus-icon-theme qt5ct qt6ct ttf-jetbrains-mono-nerd
+    zen-browser-bin
   )
 
   missing_pkgs=($(filter_missing_pkgs "${packages[@]}"))
 
   if [ "${#missing_pkgs[@]}" -eq 0 ]; then
-    echo "All packages are already installed."
+    echo "All AUR packages are already installed."
   else
-    echo "Packages to install: ${missing_pkgs[*]}"
+    echo "AUR packages to install: ${missing_pkgs[*]}"
     if [ "$DRY_RUN" = true ]; then
       echo "[Dry-run] Would run: paru -S --needed --noconfirm ${missing_pkgs[*]}"
     else
@@ -230,7 +242,7 @@ if [ "$SKIP_PACKAGES" = false ]; then
 fi
 
 # -------------------------------
-# Link dotfiles (deduplicated)
+# Link dotfiles
 # -------------------------------
 if [ "$SKIP_DOTS" = false ]; then
   echo "Installing dotfiles from $DOTFILES_DIR to $HOME..."
