@@ -10,6 +10,19 @@ cd "dotfiles"
 ./install.sh
 ```
 
+or run with flags
+
+```bash
+λ ./install.sh -h       
+Usage: ./install.sh [options]
+
+Options:
+  -y, --yes         Automatically confirm all prompts
+      --no-dots     Skip dotfile linking
+      --no-packages Skip package installation
+  -h, --help        Show this help message
+```
+
 > [!NOTE]
 > these dotfiles work best with Arch Linux since they were made with Arch linux in mind. other distros maybe can work too
 
