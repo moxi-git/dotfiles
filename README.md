@@ -22,7 +22,6 @@ Options:
       --no-dots     Skip dotfile linking
       --no-packages Skip package installation
       --dry-run     Show actions without performing them
-  -v, --verbose     Enable verbose output
   -h, --help        Show this help message
 ```
 
