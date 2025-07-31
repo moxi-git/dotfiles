@@ -306,3 +306,28 @@ echo "All done! Enjoy your Moxiu T470 dotfiles."
 if [ "$DRY_RUN" = true ]; then
   echo "[Dry-run] No changes were actually made."
 fi
+
+# -------------------------------
+# Change shell to zsh
+# -------------------------------
+echo "Changing default shell to /usr/bin/zsh..."
+chsh -s /usr/bin/zsh
+
+# -------------------------------
+# Reboot prompt
+# -------------------------------
+while true; do
+  read -rp "Reboot (Highly Recommended!) [Y/n]: " yn
+  case "$yn" in
+  [Yy] | "")
+    echo "Rebooting..."
+    sudo reboot
+    break
+    ;;
+  [Nn])
+    echo "Please reboot later to apply all changes."
+    break
+    ;;
+  *) echo "Please answer Y or N." ;;
+  esac
+done
