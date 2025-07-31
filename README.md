@@ -11,7 +11,7 @@ cd "dotfiles"
 ```
 
 > [!NOTE]
-> this dotfiles work best with Arch since they made with Arch linux in mind. other distros maybe can work too
+> these dotfiles work best with Arch Linux since they were made with Arch linux in mind. other distros maybe can work too
 
 ## Screenshots
 
