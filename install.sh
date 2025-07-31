@@ -24,6 +24,9 @@ confirm() {
   done
 }
 
+# Dynamically get the directory where this script is located
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Step 1: Install base-devel group packages with pacman
 if confirm "Install base-devel group packages with pacman?"; then
   sudo pacman -S --needed base-devel
@@ -31,6 +34,7 @@ fi
 
 # Step 2: Clone and install paru AUR helper if not present
 if ! command -v paru &>/dev/null; then
+  echo "paru is required for AUR installs."
   if confirm "paru not found. Clone and install paru?"; then
     tmpdir=$(mktemp -d)
     git clone https://aur.archlinux.org/paru.git "$tmpdir/paru"
@@ -39,7 +43,7 @@ if ! command -v paru &>/dev/null; then
     popd >/dev/null
     rm -rf "$tmpdir"
   else
-    echo "paru is required for AUR installs. Exiting."
+    echo "paru is required to proceed. Exiting."
     exit 1
   fi
 else
@@ -83,11 +87,25 @@ echo
 echo "Packages installed."
 echo
 
-DOTFILES_DIR="$HOME/dotfiles"
-
 confirm_overwrite() {
   local dest="$1"
+  # Safety check: only allow paths inside $HOME
+  if [[ "$dest" != "$HOME"* ]]; then
+    echo "Refusing to overwrite $dest outside of home directory."
+    return 1
+  fi
+
   if [ -e "$dest" ] || [ -L "$dest" ]; then
+    # Check if it's already a symlink to the intended source
+    if [ -L "$dest" ]; then
+      local link_target
+      link_target=$(readlink "$dest")
+      if [[ "$link_target" == "$DOTFILES_DIR/"* ]]; then
+        echo "$dest is already correctly linked. Skipping."
+        return 1
+      fi
+    fi
+
     echo
     echo "Warning: $dest already exists and will be removed if you choose to overwrite."
     if confirm "Overwrite $dest?"; then
@@ -104,24 +122,30 @@ confirm_overwrite() {
 echo "Installing dotfiles from $DOTFILES_DIR to $HOME..."
 echo
 
-shopt -s dotglob # Include hidden files
+# Enable dotglob and nullglob to handle hidden files and no-match patterns gracefully
+shopt -s dotglob nullglob
 
 for item in "$DOTFILES_DIR"/* "$DOTFILES_DIR"/.[!.]* "$DOTFILES_DIR"/..?*; do
+  # Skip if the glob didn't match anything
+  [ -e "$item" ] || continue
+
   base=$(basename "$item")
   # Skip README.md, install.sh, and .git directory
-  if [ "$base" = "README.md" ] || [ "$base" = "install.sh" ] || [ "$base" = ".git" ]; then
+  if [[ "$base" == "README.md" || "$base" == "install.sh" || "$base" == ".git" ]]; then
     continue
   fi
 
   target="$HOME/$base"
 
   if confirm_overwrite "$target"; then
-    ln -s "$item" "$target"
+    # Use relative symlink from $HOME to $DOTFILES_DIR to improve portability
+    rel_target=$(realpath --relative-to="$HOME" "$item")
+    ln -s "$rel_target" "$target"
     echo "Linked $item → $target"
   fi
 done
 
-shopt -u dotglob
+shopt -u dotglob nullglob
 
 echo
 echo "All done! Enjoy your Moxiu T470 dotfiles."
