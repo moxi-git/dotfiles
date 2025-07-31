@@ -8,12 +8,19 @@ AUTO_YES=false
 SKIP_DOTS=false
 SKIP_PACKAGES=false
 DRY_RUN=false
+VERBOSE=false
 
 # -------------------------------
 # Helpers
 # -------------------------------
 command_exists() {
   command -v "$1" &>/dev/null
+}
+
+log() {
+  if [ "$VERBOSE" = true ]; then
+    echo "$@"
+  fi
 }
 
 # realpath fallback
@@ -62,6 +69,7 @@ for arg in "$@"; do
   --no-dots) SKIP_DOTS=true ;;
   --no-packages) SKIP_PACKAGES=true ;;
   --dry-run) DRY_RUN=true ;;
+  -v | --verbose) VERBOSE=true ;;
   -h | --help)
     echo "Usage: ./install.sh [options]"
     echo
@@ -70,6 +78,7 @@ for arg in "$@"; do
     echo "      --no-dots     Skip dotfile linking"
     echo "      --no-packages Skip package installation"
     echo "      --dry-run     Show actions without performing them"
+    echo "  -v, --verbose     Enable verbose output"
     echo "  -h, --help        Show this help message"
     exit 0
     ;;
@@ -185,6 +194,7 @@ if [ "$SKIP_PACKAGES" = false ] && confirm "Install base-devel group packages wi
   if [ "$DRY_RUN" = true ]; then
     echo "[Dry-run] Would run: sudo pacman -S --needed base-devel"
   else
+    log "Running: sudo pacman -S --needed base-devel"
     sudo pacman -S --needed base-devel
   fi
 fi
@@ -200,8 +210,10 @@ if [ "$SKIP_PACKAGES" = false ]; then
         echo "[Dry-run] Would clone paru repo and build it"
       else
         tmpdir=$(mktemp -d)
+        log "Cloning paru into $tmpdir/paru"
         git clone https://aur.archlinux.org/paru.git "$tmpdir/paru"
         pushd "$tmpdir/paru" >/dev/null
+        log "Building paru package"
         makepkg -si --noconfirm
         popd >/dev/null
         rm -rf "$tmpdir"
@@ -259,6 +271,7 @@ if [ "$SKIP_PACKAGES" = false ]; then
     if [ "$DRY_RUN" = true ]; then
       echo "[Dry-run] Would run: paru -S --needed --noconfirm ${missing_pkgs[*]}"
     else
+      log "Running: paru -S --needed --noconfirm ${missing_pkgs[*]}"
       paru -S --needed --noconfirm "${missing_pkgs[@]}"
     fi
   fi
@@ -308,10 +321,18 @@ if [ "$DRY_RUN" = true ]; then
 fi
 
 # -------------------------------
-# Change shell to zsh
+# Change shell to fish (if installed)
 # -------------------------------
-echo "Changing default shell to /usr/bin/fish..."
-chsh -s /usr/bin/fish
+if command_exists /usr/bin/fish; then
+  echo "Changing default shell to /usr/bin/fish..."
+  if [ "$DRY_RUN" = true ]; then
+    echo "[Dry-run] Would run: chsh -s /usr/bin/fish"
+  else
+    chsh -s /usr/bin/fish && echo "Default shell changed to fish."
+  fi
+else
+  echo "Fish shell (/usr/bin/fish) not found. Skipping shell change."
+fi
 
 # -------------------------------
 # Reboot prompt
@@ -321,7 +342,11 @@ while true; do
   case "$yn" in
   [Yy] | "")
     echo "Rebooting..."
-    sudo reboot
+    if [ "$DRY_RUN" = true ]; then
+      echo "[Dry-run] Would reboot now"
+    else
+      sudo reboot
+    fi
     break
     ;;
   [Nn])
