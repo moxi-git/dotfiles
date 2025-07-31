@@ -1,1 +1,0 @@
-{"secondary_sources":[],"schema_version":"1.1","metrics":{"start_time":1753961040745,"completion_time":1753961045858},"primary_source":{"type":"registry+v1","id":"pkg:npm/markdown-toc@1.2.0"},"links":{"opt":{},"bin":{"markdown-toc":"node_modules/.bin/markdown-toc"},"share":{}},"name":"markdown-toc"}
