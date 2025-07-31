@@ -310,8 +310,8 @@ fi
 # -------------------------------
 # Change shell to zsh
 # -------------------------------
-echo "Changing default shell to /usr/bin/zsh..."
-chsh -s /usr/bin/zsh
+echo "Changing default shell to /usr/bin/fish..."
+chsh -s /usr/bin/fish
 
 # -------------------------------
 # Reboot prompt
