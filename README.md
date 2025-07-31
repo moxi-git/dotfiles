@@ -5,6 +5,7 @@ my Thinkpad T470 dotfiles.
 ## Installation
 
 ```bash
+sudo pacman -S git python
 git clone https://github.com/moxi-git/dotfiles.git -b "dotfiles"
 cd "dotfiles"
 bash ./install.sh
