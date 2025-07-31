@@ -7,6 +7,51 @@ set -euo pipefail
 AUTO_YES=false
 SKIP_DOTS=false
 SKIP_PACKAGES=false
+DRY_RUN=false
+
+# -------------------------------
+# Helpers
+# -------------------------------
+command_exists() {
+  command -v "$1" &>/dev/null
+}
+
+# realpath fallback
+realpath_rel() {
+  if command_exists realpath; then
+    realpath --relative-to="$HOME" "$1"
+  else
+    # fallback: try python3
+    if command_exists python3; then
+      python3 -c "import os.path; print(os.path.relpath('$1', '$HOME'))"
+    else
+      # fallback: absolute path (not ideal)
+      echo "$1"
+    fi
+  fi
+}
+
+# Check if package is installed (supports pacman & paru)
+pkg_installed() {
+  local pkg=$1
+  if command_exists pacman; then
+    pacman -Qq "$pkg" &>/dev/null && return 0 || return 1
+  else
+    return 1
+  fi
+}
+
+# Filter missing packages from list
+filter_missing_pkgs() {
+  local pkgs=("$@")
+  local missing=()
+  for pkg in "${pkgs[@]}"; do
+    if ! pkg_installed "$pkg"; then
+      missing+=("$pkg")
+    fi
+  done
+  echo "${missing[@]}"
+}
 
 # -------------------------------
 # Parse command-line arguments
@@ -16,6 +61,7 @@ for arg in "$@"; do
   -y | --yes) AUTO_YES=true ;;
   --no-dots) SKIP_DOTS=true ;;
   --no-packages) SKIP_PACKAGES=true ;;
+  --dry-run) DRY_RUN=true ;;
   -h | --help)
     echo "Usage: ./install.sh [options]"
     echo
@@ -23,6 +69,7 @@ for arg in "$@"; do
     echo "  -y, --yes         Automatically confirm all prompts"
     echo "      --no-dots     Skip dotfile linking"
     echo "      --no-packages Skip package installation"
+    echo "      --dry-run     Show actions without performing them"
     echo "  -h, --help        Show this help message"
     exit 0
     ;;
@@ -37,7 +84,7 @@ done
 # Confirmation Functions
 # -------------------------------
 confirm() {
-  if [ "$AUTO_YES" = true ]; then
+  if [ "$AUTO_YES" = true ] || [ "$DRY_RUN" = true ]; then
     return 0
   fi
   while true; do
@@ -51,7 +98,7 @@ confirm() {
 }
 
 confirm_start() {
-  if [ "$AUTO_YES" = true ]; then
+  if [ "$AUTO_YES" = true ] || [ "$DRY_RUN" = true ]; then
     return
   fi
   while true; do
@@ -85,7 +132,11 @@ confirm_overwrite() {
     echo
     echo "Warning: $dest already exists and will be removed if you choose to overwrite."
     if confirm "Overwrite $dest?"; then
-      rm -rf "$dest"
+      if [ "$DRY_RUN" = true ]; then
+        echo "[Dry-run] Would remove $dest"
+      else
+        rm -rf "$dest"
+      fi
       return 0
     else
       echo "Skipping $dest"
@@ -94,6 +145,17 @@ confirm_overwrite() {
   fi
   return 0
 }
+
+# -------------------------------
+# Root check and warn
+# -------------------------------
+if [ "$EUID" -eq 0 ]; then
+  echo "Warning: Running the installer as root is not recommended."
+  echo "Some commands require sudo, but the script should be run as a normal user."
+  if ! confirm "Continue as root?"; then
+    exit 1
+  fi
+fi
 
 # -------------------------------
 # Welcome & Start
@@ -120,22 +182,30 @@ DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Install base-devel
 # -------------------------------
 if [ "$SKIP_PACKAGES" = false ] && confirm "Install base-devel group packages with pacman?"; then
-  sudo pacman -S --needed base-devel
+  if [ "$DRY_RUN" = true ]; then
+    echo "[Dry-run] Would run: sudo pacman -S --needed base-devel"
+  else
+    sudo pacman -S --needed base-devel
+  fi
 fi
 
 # -------------------------------
 # Ensure paru is installed
 # -------------------------------
 if [ "$SKIP_PACKAGES" = false ]; then
-  if ! command -v paru &>/dev/null; then
+  if ! command_exists paru; then
     echo "paru is required for AUR installs."
     if confirm "paru not found. Clone and install paru?"; then
-      tmpdir=$(mktemp -d)
-      git clone https://aur.archlinux.org/paru.git "$tmpdir/paru"
-      pushd "$tmpdir/paru" >/dev/null
-      makepkg -si --noconfirm
-      popd >/dev/null
-      rm -rf "$tmpdir"
+      if [ "$DRY_RUN" = true ]; then
+        echo "[Dry-run] Would clone paru repo and build it"
+      else
+        tmpdir=$(mktemp -d)
+        git clone https://aur.archlinux.org/paru.git "$tmpdir/paru"
+        pushd "$tmpdir/paru" >/dev/null
+        makepkg -si --noconfirm
+        popd >/dev/null
+        rm -rf "$tmpdir"
+      fi
     else
       echo "paru is required to proceed. Exiting."
       exit 1
@@ -147,35 +217,51 @@ if [ "$SKIP_PACKAGES" = false ]; then
   echo
   echo "Installing packages and dependencies via paru..."
 
-  paru -S --needed --noconfirm \
-    caelestia-shell-git \
-    caelestia-cli-git \
-    hyprland \
-    xdg-desktop-portal-hyprland \
-    xdg-desktop-portal-gtk \
-    hyprpicker \
-    hypridle \
-    wl-clipboard \
-    cliphist \
-    bluez-utils \
-    inotify-tools \
-    app2unit \
-    wireplumber \
-    trash-cli \
-    foot \
-    fish \
-    fastfetch \
-    starship \
-    btop \
-    jq \
-    socat \
-    imagemagick \
-    curl \
-    adw-gtk-theme \
-    papirus-icon-theme \
-    qt5ct \
-    qt6ct \
+  # List of desired packages
+  packages=(
+    caelestia-shell-git
+    caelestia-cli-git
+    hyprland
+    xdg-desktop-portal-hyprland
+    xdg-desktop-portal-gtk
+    hyprpicker
+    hypridle
+    wl-clipboard
+    cliphist
+    bluez-utils
+    inotify-tools
+    app2unit
+    wireplumber
+    trash-cli
+    foot
+    fish
+    fastfetch
+    starship
+    btop
+    jq
+    socat
+    imagemagick
+    curl
+    adw-gtk-theme
+    papirus-icon-theme
+    qt5ct
+    qt6ct
     ttf-jetbrains-mono-nerd
+  )
+
+  # Filter only missing packages to speed up install
+  missing_pkgs=($(filter_missing_pkgs "${packages[@]}"))
+
+  if [ "${#missing_pkgs[@]}" -eq 0 ]; then
+    echo "All packages are already installed."
+  else
+    echo "Packages to install: ${missing_pkgs[*]}"
+    if [ "$DRY_RUN" = true ]; then
+      echo "[Dry-run] Would run: paru -S --needed --noconfirm ${missing_pkgs[*]}"
+    else
+      paru -S --needed --noconfirm "${missing_pkgs[@]}"
+    fi
+  fi
 
   echo
   echo "Packages installed."
@@ -202,9 +288,13 @@ if [ "$SKIP_DOTS" = false ]; then
     target="$HOME/$base"
 
     if confirm_overwrite "$target"; then
-      rel_target=$(realpath --relative-to="$HOME" "$item")
-      ln -s "$rel_target" "$target"
-      echo "Linked $item → $target"
+      rel_target=$(realpath_rel "$item")
+      if [ "$DRY_RUN" = true ]; then
+        echo "[Dry-run] Would link $item → $target (relative: $rel_target)"
+      else
+        ln -sfn "$rel_target" "$target"
+        echo "Linked $item → $target"
+      fi
     fi
   done
 
@@ -213,3 +303,6 @@ fi
 
 echo
 echo "All done! Enjoy your Moxiu T470 dotfiles."
+if [ "$DRY_RUN" = true ]; then
+  echo "[Dry-run] No changes were actually made."
+fi
