@@ -26,7 +26,7 @@ Options:
 ```
 
 > [!NOTE]
-> these dotfiles work best with Arch Linux since they were made with Arch linux in mind. other distros maybe can work too
+> these dotfiles work best with Arch Linux since they were made with Arch linux in mind. other distros maybe can work too. anyways please report any bugs and sumbit pull requests.
 
 ## Screenshots
 
