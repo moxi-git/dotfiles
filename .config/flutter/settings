@@ -1,0 +1,4 @@
+{
+  "android-sdk": "/opt/android-sdk",
+  "enable-web": false
+}

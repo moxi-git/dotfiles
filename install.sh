@@ -179,9 +179,9 @@ fi
 # -------------------------------
 if [ "$SKIP_PACKAGES" = false ]; then
   if [ "$DRY_RUN" = true ]; then
-    echo "[Dry-run] Would run: sudo pacman -S nemo btop thunar pavucontrol nvim"
+    echo "[Dry-run] Would run: sudo pacman -S nemo btop thunar pavucontrol nvim pyright"
   else
-    sudo pacman -S nemo btop thunar pavucontrol nvim
+    sudo pacman -S nemo btop thunar pavucontrol nvim pyright
   fi
 fi
 
