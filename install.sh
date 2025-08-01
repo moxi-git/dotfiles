@@ -220,7 +220,7 @@ if [ "$SKIP_PACKAGES" = false ]; then
     app2unit wireplumber trash-cli foot fish fastfetch starship
     btop jq socat imagemagick curl adw-gtk-theme
     papirus-icon-theme qt5ct qt6ct ttf-jetbrains-mono-nerd
-    zen-browser-bin
+    zen-browser-bin noto-fonts-emoji ttf-joypixels ttf-twemoji-color
   )
 
   missing_pkgs=($(filter_missing_pkgs "${packages[@]}"))
