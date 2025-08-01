@@ -27,7 +27,7 @@ Thumbs.db
 *.old
 *.orig
 
-# System-specific or user-specific folders
+# System-specific or user-specific folders to ignore entirely
 .cache/
 .config/Thunar/
 .config/firefox/
@@ -55,7 +55,6 @@ Thumbs.db
 !.config/qt6ct/
 !.config/spicetify/
 !.config/systemd/
-!.config/fuzzel/
 !.config/gtk-3.0/
 !.config/gtk-4.0/
 
