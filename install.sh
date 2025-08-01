@@ -251,7 +251,7 @@ if [ "$SKIP_DOTS" = false ]; then
   while IFS= read -r item; do
     base=$(basename "$item")
     case "$base" in
-    README.md | .gitignore | install.sh | .git) continue ;;
+    README.md | install.sh | .git) continue ;;
     esac
 
     target="$HOME/$base"
