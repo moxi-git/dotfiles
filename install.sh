@@ -242,30 +242,48 @@ if [ "$SKIP_PACKAGES" = false ]; then
 fi
 
 # -------------------------------
-# Link dotfiles
+# Link dotfiles from configs/
 # -------------------------------
 if [ "$SKIP_DOTS" = false ]; then
-  echo "Installing dotfiles from $DOTFILES_DIR to $HOME..."
+  echo "Installing dotfiles from $DOTFILES_DIR/configs to $HOME and ~/.config..."
   echo
 
-  while IFS= read -r item; do
-    base=$(basename "$item")
-    case "$base" in
-    README.md | install.sh | .git) continue ;;
-    esac
+  CONFIGS_DIR="$DOTFILES_DIR/configs"
 
+  # Handle files in configs/ (e.g. .bashrc, .viminfo)
+  find "$CONFIGS_DIR" -mindepth 1 -maxdepth 1 ! -name ".config" | while read -r item; do
+    base=$(basename "$item")
     target="$HOME/$base"
 
     if confirm_overwrite "$target"; then
       rel_target=$(realpath_rel "$item")
       if [ "$DRY_RUN" = true ]; then
-        echo "[Dry-run] Would link $item → $target (relative: $rel_target)"
+        echo "[Dry-run] Would link $item → $target"
       else
-        ln -sfn "$rel_target" "$target"
+        ln -sfn "$item" "$target"
         echo "Linked $item → $target"
       fi
     fi
-  done < <(find "$DOTFILES_DIR" -mindepth 1 -maxdepth 1)
+  done
+
+  # Handle files inside configs/.config/
+  if [ -d "$CONFIGS_DIR/.config" ]; then
+    mkdir -p "$HOME/.config"
+
+    find "$CONFIGS_DIR/.config" -mindepth 1 -maxdepth 1 | while read -r config_item; do
+      config_name=$(basename "$config_item")
+      config_target="$HOME/.config/$config_name"
+
+      if confirm_overwrite "$config_target"; then
+        if [ "$DRY_RUN" = true ]; then
+          echo "[Dry-run] Would link $config_item → $config_target"
+        else
+          ln -sfn "$config_item" "$config_target"
+          echo "Linked $config_item → $config_target"
+        fi
+      fi
+    done
+  fi
 
   echo
 fi
