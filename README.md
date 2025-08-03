@@ -26,10 +26,7 @@ Options:
 ```
 
 > [!IMPORTANT]
-> Post installation: change wallpaper if the theaming is broken and install some apps if needed
-
-> [!WARNING]
-> ⚠️ DO NOT DELETE THE "dotfiles" FOLDER ELSE YOUR SYSTEM WILL BREAK! ⚠️
+> Post installation: change wallpaper if the theaming is broken and install some apps if needed.
 
 > [!NOTE]
 > these dotfiles work best with Arch Linux since they were made with Arch linux in mind. other distros maybe can work too. anyways please report any bugs and sumbit pull requests.
