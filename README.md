@@ -6,7 +6,7 @@ my Thinkpad T470 dotfiles.
 
 ```bash
 sudo pacman -S git python
-git clone https://github.com/moxi-git/dotfiles.git -b "dotfiles"
+git clone https://github.com/moxi-git/dotfiles.git -b "dev"
 cd "dotfiles"
 bash ./install.sh
 ```
